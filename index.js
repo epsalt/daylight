@@ -12,6 +12,9 @@ const sunchart = () => {
         values: doy_data.map(d => standardize(d[key]))
     }));
 
+    var keep = ["solarNoon", "sunset", "sunrise", "dawn", "dusk"];
+    sundata = sundata.filter(d => keep.includes(d.name));
+
     var categories = sundata.map(d => d.name);
 
     var svg = d3.select("svg"),
@@ -31,13 +34,11 @@ const sunchart = () => {
     var xAxis = d3.axisBottom().scale(x).ticks(10);
     var yAxis = d3.axisLeft().scale(y).ticks(5).tickFormat(d3.timeFormat("%I %p"));
 
-    //x axis
     svg.append("g")
 	.attr("class", "x axis")
 	.attr("transform", "translate(0," + (height - padding) + ")")
 	.call(xAxis);
 
-    //y axis
     svg.append("g")
 	.attr("class", "y axis")
 	.attr("transform", "translate(" + padding + ", 0)")
