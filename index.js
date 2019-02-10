@@ -1,21 +1,36 @@
 /*global d3, SunCalc*/
 
 const sunchart = () => {
-    var dates = doys(2015);
-    var lat = 51;
-    var lon = -114;
+    const lat = 51;
+    const lon = -114;
+    const year = 2015;
 
-    var doy_data = dates.map(d => SunCalc.getTimes(d, lat, lon));
+    var data = days(2015).map(d => SunCalc.getTimes(d, lat, lon));
 
-    var sundata = Object.keys(doy_data[0]).map(key => ({
-        name: key,
-        values: doy_data.map(d => standardize(d[key]))
-    }));
+    // The order is important
+    var keep = ["nightEnd", "sunrise", "dusk", "night"];
 
-    var keep = ["solarNoon", "sunset", "sunrise", "dawn", "dusk"];
-    sundata = sundata.filter(d => keep.includes(d.name));
+    var sundata = keep.map((key, i) => (
+        {name: key, order: i,
+         values: data.map((d, j) => {
+             return {
+                 value: standardize(d[key], year, j)
+             };
+         })}
+    ));
 
-    var categories = sundata.map(d => d.name);
+    sundata = sundata.map((d, i, arr) => {
+        d.values = d.values.map((f, j) => {
+
+            let options = d3.keys(arr).map(d => arr[d].values[j].value);
+            options = options.filter(d => d < f.value);
+            f.previous = options.length === 0 ?
+                new Date(year, 0, 1) :
+                new Date(Math.max(...options));
+            return f;
+        });
+        return d;
+    });
 
     var svg = d3.select("svg"),
         width = +svg.attr("width"),
@@ -23,8 +38,8 @@ const sunchart = () => {
         padding = 100;
 
     var y = d3.scaleTime()
-        .domain([new Date(2000, 0, 1), new Date(2000, 0, 2)])
-        .nice(d3.timeDay, 1)
+        .domain([new Date(year, 0, 1), new Date(year, 0, 2)])
+        // .nice(d3.timeDay, 1)
         .rangeRound([height - padding, padding]);
 
     var x = d3.scaleLinear()
@@ -44,31 +59,38 @@ const sunchart = () => {
 	.attr("transform", "translate(" + padding + ", 0)")
 	.call(yAxis);
 
-    var line = d3.line()
-        .x((d, i) => x(i))
-        .y(d => y(d))
-        .curve(d3.curveStep);
-
     var colors = d3.scaleOrdinal()
-        .domain(categories)
+        .domain(keep)
         .range(d3.schemeSet2);
 
-    svg.selectAll(".line")
+    var area = d3.area()
+        .x((d, i) => x(i))
+        .y0(d => y(d.value))
+        .y1(d => y(d.previous))
+        .curve(d3.curveStep);
+
+    svg.append('g')
+        .selectAll('path')
         .data(sundata).enter()
-          .append("path")
-          .attr("class", "line")
-          .attr("d", d =>  line(d.values))
-          .style("stroke", d => colors(d.name))
-          .attr("id", d => d.name)
-          .style("fill-opacity", 0);
+        .append("path")
+        .attr("class", "area")
+        .attr("id", d => d.name)
+        .attr('d', d => area(d.values))
+        .style('fill', d => colors(d.name))
+        .style('opacity', .5);
+
+    return sundata;
 };
 
-const standardize = date => {
-    let d = new Date(date.setFullYear(2000, 0, 1));
-    return d;
+const standardize = (date, year, i) => {
+    if (isNaN(date.getTime())) {
+        return new Date(year, 0, 1);
+    } else {
+        return new Date(date.setFullYear(year, 0, 1));
+    }
 };
 
-const doys = year => {
+const days = year => {
     var dates = [];
     for (let day = 1; day <= 365; day++) {
         var date = new Date(year, 0);
