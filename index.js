@@ -1,12 +1,15 @@
 /*global d3, moment, SunCalc*/
 
 const sunchart = () => {
-    const lat = 51;
-    const lon = -114;
-    const tz = "America/Edmonton";
-    const year = 2015;
+    var lat = 51,
+        lon = -114,
+        location = "Calgary",
+        tz = "America/Edmonton",
+        year = 2015;
 
-    var margin = {top: 20, right: 50, bottom: 20, left: 50};
+    var text = [`Location: ${location}`, `Timezone: ${tz}`];
+
+    var margin = {top: 50, right: 50, bottom: 50, left: 50};
 
     var width = 960 - margin.left - margin.top,
         height = 500 - margin.top - margin.bottom;
@@ -98,5 +101,15 @@ const sunchart = () => {
 	.attr("class", "y axis")
 	.attr("transform", "translate(0, 0)")
 	.call(yAxis);
+
+    svg.append('g')
+        .selectAll('text')
+        .data(text)
+        .enter().append('text')
+        .text(d => d)
+        .attr('x', 15)
+        .attr('y', (d, i) => -margin.top/2 + i * 17.5)
+        .style('font-size', '15px')
+        .style('font-weight', 300);
 
 };
