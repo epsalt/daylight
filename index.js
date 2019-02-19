@@ -6,10 +6,16 @@ const sunchart = () => {
     const tz = "America/Edmonton";
     const year = 2015;
 
-    var svg = d3.select("svg"),
-        width = +svg.attr("width"),
-        height = +svg.attr("height"),
-        padding = 100;
+    var margin = {top: 20, right: 50, bottom: 20, left: 50};
+
+    var width = 960 - margin.left - margin.top,
+        height = 500 - margin.top - margin.bottom;
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     // Contours
     var n = 30,
@@ -32,8 +38,8 @@ const sunchart = () => {
 
     const projection = d3.geoTransform({
         point: function(x, y) {
-            let nx = padding + y * ((width - 2 * padding) / days);
-            let ny = height - padding -  x * ((height - 2 * padding) / (mpd/n));
+            let nx = y * (width / days);
+            let ny = height - x * (height / (mpd / n));
             this.stream.point(nx, ny);
         }
     });
@@ -48,12 +54,12 @@ const sunchart = () => {
     var y = d3.scaleTime()
         .domain([new Date(year, 0, 1), new Date(year, 0, 2)])
         .nice(d3.timeDay, 1)
-        .rangeRound([height - padding, padding])
+        .rangeRound([height, 0])
         .clamp(true);
 
     var x = d3.scaleTime()
         .domain([new Date(year, 0, 1), new Date(year, 11, 31)])
-        .rangeRound([padding, width - padding]);
+        .rangeRound([0, width]);
 
     var xAxis = d3.axisBottom()
         .scale(x)
@@ -81,7 +87,7 @@ const sunchart = () => {
 
     svg.append("g")
 	.attr("class", "x axis")
-	.attr("transform", "translate(0," + (height - padding) + ")")
+	.attr("transform", "translate(0," + height + ")")
 	.call(xAxis)
         .selectAll(".tick text")
         .style("text-anchor", "start")
@@ -90,7 +96,7 @@ const sunchart = () => {
 
     svg.append("g")
 	.attr("class", "y axis")
-	.attr("transform", "translate(" + padding + ", 0)")
+	.attr("transform", "translate(0, 0)")
 	.call(yAxis);
 
 };
