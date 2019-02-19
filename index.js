@@ -51,12 +51,20 @@ const sunchart = () => {
         .rangeRound([height - padding, padding])
         .clamp(true);
 
-    var x = d3.scaleLinear()
-        .domain([0, days,])
+    var x = d3.scaleTime()
+        .domain([new Date(year, 0, 1), new Date(year, 11, 31)])
         .rangeRound([padding, width - padding]);
 
-    var xAxis = d3.axisBottom().scale(x).ticks(10);
-    var yAxis = d3.axisLeft().scale(y).ticks(5).tickFormat(d3.timeFormat("%I %p"));
+    var xAxis = d3.axisBottom()
+        .scale(x)
+        .ticks(d3.timeMonth)
+        .tickSize(16, 0)
+        .tickFormat(d3.timeFormat("%b"));
+
+    var yAxis = d3.axisLeft()
+        .scale(y)
+        .ticks(5)
+        .tickFormat(d3.timeFormat("%I %p"));
 
     var color = d3.scaleLinear()
         .domain(d3.extent(thresholds))
@@ -74,7 +82,11 @@ const sunchart = () => {
     svg.append("g")
 	.attr("class", "x axis")
 	.attr("transform", "translate(0," + (height - padding) + ")")
-	.call(xAxis);
+	.call(xAxis)
+        .selectAll(".tick text")
+        .style("text-anchor", "start")
+        .attr("x", 6)
+        .attr("y", 6);
 
     svg.append("g")
 	.attr("class", "y axis")
