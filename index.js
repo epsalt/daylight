@@ -1,57 +1,138 @@
-/*global d3, moment, SunCalc*/
+/*global d3, delaunay, moment, topojson, SunCalc*/
 
-const sunchart = () => {
-    var lat = 51,
-        lon = -114,
-        location = "Calgary",
-        tz = "America/Edmonton",
-        year = 2015;
+const map = updateSunchart => {
+    const margin = {top: 50, right: 50, bottom: 50, left: 50};
 
-    var text = [`Location: ${location}`, `Timezone: ${tz}`];
+    const width = 960 - margin.left - margin.top,
+          height = 500 - margin.top - margin.bottom;
+
+    const svg = d3.select(".map").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    const projection = d3.geoEquirectangular()
+          .translate([width / 2, height / 2]);
+
+    const path = d3.geoPath()
+          .projection(projection);
+
+    Promise.all([
+        d3.json("https://unpkg.com/world-atlas@1/world/110m.json"),
+        d3.json("https://raw.githubusercontent.com/moment/moment-timezone/bf1de5d6a7cc6cb493d90b021fb2c0ac777c93eb/data/meta/latest.json")])
+        .then(([world, tz]) => {
+
+            const zones = d3.entries(tz.zones).map(
+                (obj, i) => {
+                    obj.value["id"] = i;
+                    return obj;}
+            );
+
+            const points = d3.entries(tz.zones)
+                  .map(d => projection([d.value.long, d.value.lat]));
+
+            const voronoi = d3.Delaunay.from(points)
+                  .voronoi([-margin.left, -margin.top, width + margin.right, height + margin.bottom]);
+
+            const mouseover = d => {
+                d3.selectAll(`circle#zone${d.value.id}`).attr("fill", "red");
+                // Show zone name
+            };
+
+            const mouseout = d => {
+                d3.selectAll(`circle#zone${d.value.id}`).attr("fill", "darkgreen");
+            };
+
+            const click = d => {
+                updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
+            };
+
+            svg.append("path")
+                .attr("d", path(topojson.feature(world, world.objects.countries)))
+                .attr("fill", "#ccc")
+                .attr("stroke", "white");
+
+            svg.append("path")
+                .attr("d", path(({type: "Sphere"})))
+                .attr("stroke", "#000")
+                .attr("fill", "none");
+
+            svg.selectAll("path")
+                .data(zones)
+                .enter()
+                .append("path")
+                .attr("d", (d, i) => voronoi.renderCell(i))
+                .attr("fill", "none")
+                .attr("pointer-events", "all")
+                .on("mouseover", mouseover)
+                .on("mouseout", mouseout)
+                .on("click", click);
+
+            svg.selectAll("circle")
+      	        .data(zones)
+                .enter()
+      	        .append("circle")
+      	        .attr("r", 2)
+      	        .attr("cx", d => projection([d.value.long, d.value.lat])[0])
+                .attr("cy", d => projection([d.value.long, d.value.lat])[1])
+      	        .attr("fill", "darkgreen")
+      	        .attr("opacity", 0.5)
+                .attr("id", d => `zone${d.value.id}`);
+    });
+};
+
+const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
+
+    const mpd = 1440,
+          m = moment.tz(tz).year(year).month(0).date(1),
+          data = new Array();
+
+
+    for (let i = 0; i < 365; i++) {
+        for (let j = 0; j < 24; j++) {
+            for (let k = 0; k < 60/resolution; k++) {
+                m.hours(j).minutes(k * resolution);
+                var alt = SunCalc.getPosition(m.clone(), lat, long).altitude * (180/Math.PI);
+                data[i * 24 * (60/resolution) + j * (60/resolution) + k] =  alt;
+            }
+        }
+        m.add(1, 'days');
+    };
+
+    const contours = d3.contours()
+          .size([1440 / resolution, 365])
+          .thresholds(thresholds)(data);
+
+    return contours;
+};
+
+const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
+
+    var text = [`Location: ${location}`, `Timezone: ${tz}`],
+        thresholds = [-90, -18, -12, -6, 0];
 
     var margin = {top: 50, right: 50, bottom: 50, left: 50};
 
     var width = 960 - margin.left - margin.top,
         height = 500 - margin.top - margin.bottom;
 
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select(".chart").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    // Contours
-    var n = 30,
-        mpd = 1440,
-        days = 365;
-
-    var m = moment.tz(tz).year(year).month(0).date(1);
-    var data = new Array();
-
-    for (let i = 0; i < days; i++) {
-        for (let j = 0; j < 24; j++) {
-            for (let k = 0; k < 60/n; k++) {
-                m.hours(j).minutes(k * n);
-                var alt = SunCalc.getPosition(m.clone(), lat, lon).altitude * (180/Math.PI);
-                data[i * 24 * (60/n) + j * (60/n) + k] =  alt;
-            }
-        }
-        m.add(1, 'days');
-    };
 
     const projection = d3.geoTransform({
         point: function(x, y) {
-            let nx = y * (width / days);
-            let ny = height - x * (height / (mpd / n));
+            let nx = y * (width / 365);
+            let ny = height - x * (height / (1440 / resolution));
             this.stream.point(nx, ny);
         }
     });
 
-    var thresholds = [-90, -18, -12, -6, 0];
-
-    var contours = d3.contours()
-        .size([mpd/n, days])
-        .thresholds(thresholds)(data);
+    var contours = sunContours(lat, lon, location, tz, year, resolution, thresholds);
 
     // Scales
     var y = d3.scaleTime()
@@ -109,7 +190,31 @@ const sunchart = () => {
         .text(d => d)
         .attr('x', 15)
         .attr('y', (d, i) => -margin.top/2 + i * 17.5)
+        .attr('class', 'annotation')
         .style('font-size', '15px')
         .style('font-weight', 300);
 
+
+    const update = (lat, lon, location, tz) => {
+        contours = sunContours(lat, lon, location, tz, year, resolution, thresholds);
+        text = [`Location: ${location}`, `Timezone: ${tz}`];
+
+        svg.selectAll("path")
+            .data(contours)
+            .attr('d', d3.geoPath(projection));
+
+        svg.selectAll(".annotation")
+            .data(text)
+            .text(d => d);
+        console.log(text);
+    };
+
+    return update;
+
+};
+
+const main = () => {
+    const year = 2015,
+          updateSunchart = sunChart(53.55, -112.5333, "America/Edmonton", "America/Edmonton", year);
+    map(updateSunchart);
 };
