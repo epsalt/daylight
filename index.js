@@ -109,54 +109,52 @@ const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
 
 const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
 
-    var text = [`Location: ${location}`, `Timezone: ${tz}`],
-        thresholds = [-90, -18, -12, -6, 0];
+    const margin = {top: 50, right: 50, bottom: 50, left: 50},
+          width = 960 - margin.left - margin.top,
+          height = 500 - margin.top - margin.bottom;
 
-    var margin = {top: 50, right: 50, bottom: 50, left: 50};
-
-    var width = 960 - margin.left - margin.top,
-        height = 500 - margin.top - margin.bottom;
-
-    var svg = d3.select(".chart").append("svg")
+    const svg = d3.select(".chart").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-
     const projection = d3.geoTransform({
-        point: function(x, y) {
+        point: (x, y) => {
             let nx = y * (width / 365);
             let ny = height - x * (height / (1440 / resolution));
             this.stream.point(nx, ny);
         }
     });
 
+
+    var text = [`Location: ${location}`, `Timezone: ${tz}`];
+
+    const thresholds = [-90, -18, -12, -6, 0];
     var contours = sunContours(lat, lon, location, tz, year, resolution, thresholds);
 
-    // Scales
-    var y = d3.scaleTime()
+    const y = d3.scaleTime()
         .domain([new Date(year, 0, 1), new Date(year, 0, 2)])
         .nice(d3.timeDay, 1)
         .rangeRound([height, 0])
         .clamp(true);
 
-    var x = d3.scaleTime()
+    const x = d3.scaleTime()
         .domain([new Date(year, 0, 1), new Date(year, 11, 31)])
         .rangeRound([0, width]);
 
-    var xAxis = d3.axisBottom()
+    const xAxis = d3.axisBottom()
         .scale(x)
         .ticks(d3.timeMonth)
         .tickSize(16, 0)
         .tickFormat(d3.timeFormat("%b"));
 
-    var yAxis = d3.axisLeft()
+    const yAxis = d3.axisLeft()
         .scale(y)
         .ticks(5)
         .tickFormat(d3.timeFormat("%I %p"));
 
-    var color = d3.scaleLinear()
+    const color = d3.scaleLinear()
         .domain(d3.extent(thresholds))
         .interpolate(d => d3.interpolateCubehelixDefault);
 
@@ -193,7 +191,6 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
         .attr('class', 'annotation')
         .style('font-size', '15px')
         .style('font-weight', 300);
-
 
     const update = (lat, lon, location, tz) => {
         contours = sunContours(lat, lon, location, tz, year, resolution, thresholds);
