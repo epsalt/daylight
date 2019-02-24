@@ -1,19 +1,19 @@
 /*global d3, delaunay, moment, topojson, SunCalc*/
 
 const map = updateSunchart => {
-    const margin = {top: 50, right: 50, bottom: 50, left: 50};
-
-    const width = 960 - margin.left - margin.top,
-          height = 500 - margin.top - margin.bottom;
+    const margin = {top: 50, right: 50, bottom: 50, left: 50},
+          width = 500 - margin.left - margin.top,
+          height = 250 - margin.top - margin.bottom;
 
     const svg = d3.select(".map").append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
-          .append("g")
-          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     const projection = d3.geoEquirectangular()
-          .translate([width / 2, height / 2]);
+          .translate([width / 2, height / 2])
+          .scale(75);
 
     const path = d3.geoPath()
           .projection(projection);
@@ -110,8 +110,8 @@ const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
 const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
 
     const margin = {top: 50, right: 50, bottom: 50, left: 50},
-          width = 960 - margin.left - margin.top,
-          height = 500 - margin.top - margin.bottom;
+          width = 500 - margin.left - margin.top,
+          height = 250 - margin.top - margin.bottom;
 
     const svg = d3.select(".chart").append("svg")
         .attr("width", width + margin.left + margin.right)
