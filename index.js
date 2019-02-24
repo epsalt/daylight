@@ -83,7 +83,8 @@ const map = updateSunchart => {
             const focus = svg.append("g")
                   .attr("transform", "translate(5,5)")
                   .attr("class", "focus")
-                  .append("text");
+                  .append("text")
+                  .attr("style", "text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;");
 
             svg.append("g")
                 .attr("class", "voronoi")
