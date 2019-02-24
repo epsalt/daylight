@@ -215,7 +215,7 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
 };
 
 const main = () => {
-    const year = 2015,
+    const year = new Date().getFullYear(),
           updateSunchart = sunChart(53.55, -112.5333, "America/Edmonton", "America/Edmonton", year);
     map(updateSunchart);
 };
