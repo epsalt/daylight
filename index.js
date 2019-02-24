@@ -1,4 +1,4 @@
-/*global d3, delaunay, moment, topojson, SunCalc*/
+/*global d3, moment, topojson, SunCalc*/
 
 const map = updateSunchart => {
     const margin = {top: 50, right: 50, bottom: 50, left: 50},
@@ -39,8 +39,11 @@ const map = updateSunchart => {
                 d3.selectAll(`circle#zone${d.value.id}`)
                     .attr("fill", "red");
 
-                focus.attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")");
-                focus.text(d.key);
+                focus
+                    .attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")")
+                    .text(d.key);
+                // If (long > value) text-align: left
+
                 updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
             };
 
@@ -67,14 +70,14 @@ const map = updateSunchart => {
             svg.append("g")
                 .attr("class", "points")
                 .selectAll("circle")
-      	        .data(zones)
+                .data(zones)
                 .enter()
-      	        .append("circle")
-      	        .attr("r", 2)
-      	        .attr("cx", d => projection([d.value.long, d.value.lat])[0])
+                .append("circle")
+                .attr("r", 2)
+                .attr("cx", d => projection([d.value.long, d.value.lat])[0])
                 .attr("cy", d => projection([d.value.long, d.value.lat])[1])
-      	        .attr("fill", "darkgreen")
-      	        .attr("opacity", 0.5)
+                .attr("fill", "darkgreen")
+                .attr("opacity", 0.5)
                 .attr("id", d => `zone${d.value.id}`);
 
             const focus = svg.append("g")
@@ -98,8 +101,7 @@ const map = updateSunchart => {
 
 const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
 
-    const mpd = 1440,
-          m = moment.tz(tz).year(year).month(0).date(1),
+    const m = moment.tz(tz).year(year).month(0).date(1),
           data = new Array();
 
     for (let i = 0; i < 365; i++) {
@@ -110,8 +112,8 @@ const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
                 data[i * 24 * (60/resolution) + j * (60/resolution) + k] =  alt;
             }
         }
-        m.add(1, 'days');
-    };
+        m.add(1, "days");
+    }
 
     const contours = d3.contours()
           .size([1440 / resolution, 365])
@@ -168,44 +170,44 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
         .tickFormat(d3.timeFormat("%I %p"));
 
     const color = d3.scaleLinear()
-        .domain(d3.extent(thresholds))
-        .interpolate(d => d3.interpolateCubehelixDefault);
-
-    svg.append('g')
-        .attr("class", "contours")
-        .selectAll('path')
-        .data(contours)
-        .enter().append('path')
-        .attr('id', d => 'g-' + d.value)
-        .attr('d', d3.geoPath(projection))
-        .style('fill', (d, i) => color(d.value))
-        .style('opacity', .5);
+          .domain(d3.extent(thresholds))
+          .interpolate(d => d3.interpolateCubehelixDefault);
 
     svg.append("g")
-	.attr("class", "x axis")
-	.attr("transform", "translate(0," + height + ")")
-	.call(xAxis)
+        .attr("class", "contours")
+        .selectAll("path")
+        .data(contours)
+        .enter().append("path")
+        .attr("id", d => "g-" + d.value)
+        .attr("d", d3.geoPath(projection))
+        .style("fill", d => color(d.value))
+        .style("opacity", 0.5);
+
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
         .selectAll(".tick text")
         .style("text-anchor", "start")
         .attr("x", 6)
         .attr("y", 6);
 
     svg.append("g")
-	.attr("class", "y axis")
-	.attr("transform", "translate(0, 0)")
-	.call(yAxis);
+        .attr("class", "y axis")
+        .attr("transform", "translate(0, 0)")
+        .call(yAxis);
 
-    svg.append('g')
+    svg.append("g")
         .attr("class", "annotations")
-        .selectAll('text')
+        .selectAll("text")
         .data(text)
-        .enter().append('text')
+        .enter().append("text")
         .text(d => d)
-        .attr('x', 15)
-        .attr('y', (d, i) => -margin.top/2 + i * 17.5)
-        .attr('class', 'annotation')
-        .style('font-size', '15px')
-        .style('font-weight', 300);
+        .attr("x", 15)
+        .attr("y", (d, i) => -margin.top/2 + i * 17.5)
+        .attr("class", "annotation")
+        .style("font-size", "15px")
+        .style("font-weight", 300);
 
     const update = (lat, lon, location, tz) => {
         contours = sunContours(lat, lon, location, tz, year, resolution, thresholds);
@@ -213,7 +215,7 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
 
         svg.selectAll("path")
             .data(contours)
-            .attr('d', d3.geoPath(projection));
+            .attr("d", d3.geoPath(projection));
 
         svg.selectAll(".annotation")
             .data(text)
