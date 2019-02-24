@@ -36,16 +36,18 @@ const map = updateSunchart => {
                   .voronoi([-margin.left, -margin.top, width + margin.right, height + margin.bottom]);
 
             const mouseover = d => {
-                d3.selectAll(`circle#zone${d.value.id}`).attr("fill", "red");
-                // Show zone name
+                d3.selectAll(`circle#zone${d.value.id}`)
+                    .attr("fill", "red");
+
+                focus.attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")");
+                focus.text(d.key);
+                updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
             };
 
             const mouseout = d => {
-                d3.selectAll(`circle#zone${d.value.id}`).attr("fill", "darkgreen");
-            };
-
-            const click = d => {
-                updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
+                d3.selectAll(`circle#zone${d.value.id}`)
+                    .attr("fill", "darkgreen");
+                focus.attr("transform", "translate(-100,-100)");
             };
 
             svg.append("path")
@@ -58,17 +60,6 @@ const map = updateSunchart => {
                 .attr("stroke", "#000")
                 .attr("fill", "none");
 
-            svg.selectAll("path")
-                .data(zones)
-                .enter()
-                .append("path")
-                .attr("d", (d, i) => voronoi.renderCell(i))
-                .attr("fill", "none")
-                .attr("pointer-events", "all")
-                .on("mouseover", mouseover)
-                .on("mouseout", mouseout)
-                .on("click", click);
-
             svg.selectAll("circle")
       	        .data(zones)
                 .enter()
@@ -79,6 +70,21 @@ const map = updateSunchart => {
       	        .attr("fill", "darkgreen")
       	        .attr("opacity", 0.5)
                 .attr("id", d => `zone${d.value.id}`);
+
+            const focus = svg.append("g")
+                  .attr("transform", "translate(5,5)")
+                  .attr("class", "focus")
+                  .append("text");
+
+            svg.selectAll("path")
+                .data(zones)
+                .enter()
+                .append("path")
+                .attr("d", (d, i) => voronoi.renderCell(i))
+                .attr("fill", "none")
+                .attr("pointer-events", "all")
+                .on("mouseover", mouseover)
+                .on("mouseout", mouseout);
     });
 };
 
