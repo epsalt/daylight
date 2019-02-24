@@ -94,7 +94,6 @@ const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
           m = moment.tz(tz).year(year).month(0).date(1),
           data = new Array();
 
-
     for (let i = 0; i < 365; i++) {
         for (let j = 0; j < 24; j++) {
             for (let k = 0; k < 60/resolution; k++) {
@@ -126,7 +125,7 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     const projection = d3.geoTransform({
-        point: (x, y) => {
+        point: function(x, y) {
             let nx = y * (width / 365);
             let ny = height - x * (height / (1440 / resolution));
             this.stream.point(nx, ny);
@@ -209,7 +208,6 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
         svg.selectAll(".annotation")
             .data(text)
             .text(d => d);
-        console.log(text);
     };
 
     return update;
