@@ -50,17 +50,23 @@ const map = updateSunchart => {
                 focus.attr("transform", "translate(-100,-100)");
             };
 
-            svg.append("path")
+            svg.append("g")
+                .attr("class", "countries")
+                .append("path")
                 .attr("d", path(topojson.feature(world, world.objects.countries)))
                 .attr("fill", "#ccc")
                 .attr("stroke", "white");
 
-            svg.append("path")
+            svg.append("g")
+                .attr("class", "border")
+                .append("path")
                 .attr("d", path(({type: "Sphere"})))
                 .attr("stroke", "#000")
                 .attr("fill", "none");
 
-            svg.selectAll("circle")
+            svg.append("g")
+                .attr("class", "points")
+                .selectAll("circle")
       	        .data(zones)
                 .enter()
       	        .append("circle")
@@ -76,7 +82,9 @@ const map = updateSunchart => {
                   .attr("class", "focus")
                   .append("text");
 
-            svg.selectAll("path")
+            svg.append("g")
+                .attr("class", "voronoi")
+                .selectAll("path")
                 .data(zones)
                 .enter()
                 .append("path")
@@ -164,6 +172,7 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
         .interpolate(d => d3.interpolateCubehelixDefault);
 
     svg.append('g')
+        .attr("class", "contours")
         .selectAll('path')
         .data(contours)
         .enter().append('path')
@@ -187,6 +196,7 @@ const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
 	.call(yAxis);
 
     svg.append('g')
+        .attr("class", "annotations")
         .selectAll('text')
         .data(text)
         .enter().append('text')
