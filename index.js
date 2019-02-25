@@ -35,22 +35,37 @@ const map = updateSunchart => {
             const voronoi = d3.Delaunay.from(points)
                   .voronoi([-margin.left, -margin.top, width + margin.right, height + margin.bottom]);
 
+            var frozen = false;
+
             const mouseover = d => {
-                d3.selectAll(`circle#zone${d.value.id}`)
-                    .attr("fill", "red");
+                if (!frozen) {
+                    d3.select(`circle#zone${d.value.id}`)
+                        .attr("fill", "red");
 
-                focus
-                    .attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")")
-                    .text(d.key);
-                // If (long > value) text-align: left
+                    focus.text(d.key)
+                        .attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")");
+                    // If (long > value) text-align: left
 
-                updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
+                    updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
+                }
             };
 
             const mouseout = d => {
-                d3.selectAll(`circle#zone${d.value.id}`)
-                    .attr("fill", "darkgreen");
-                focus.attr("transform", "translate(-100,-100)");
+                if (!frozen) {
+                    d3.select(`circle#zone${d.value.id}`)
+                        .attr("fill", "darkgreen");
+                    focus.attr("transform", "translate(-100,-100)");
+                }
+            };
+
+            const click = d => {
+                frozen = !frozen;
+
+                if (!frozen) {
+                    d3.selectAll(`circle`)
+                        .attr("fill", "darkgreen");
+                    mouseover(d);
+                }
             };
 
             svg.append("g")
@@ -96,7 +111,8 @@ const map = updateSunchart => {
                 .attr("fill", "none")
                 .attr("pointer-events", "all")
                 .on("mouseover", mouseover)
-                .on("mouseout", mouseout);
+                .on("mouseout", mouseout)
+                .on("click", click);
     });
 };
 
