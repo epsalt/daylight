@@ -1,0 +1,11 @@
+.focus {
+    text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+
+.focus.left {
+    text-anchor: start;
+}
+
+.focus.right {
+    text-anchor: end;
+}

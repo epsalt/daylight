@@ -42,9 +42,10 @@ const map = updateSunchart => {
                     d3.select(`circle#zone${d.value.id}`)
                         .attr("fill", "red");
 
-                    focus.text(d.key)
+                    focus
+                        .attr("class", (d.value.long > 90) ? "focus right" : "focus left")
+                        .text(d.key)
                         .attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")");
-                    // If (long > value) text-align: left
 
                     updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
                 }
@@ -96,10 +97,9 @@ const map = updateSunchart => {
                 .attr("id", d => `zone${d.value.id}`);
 
             const focus = svg.append("g")
-                  .attr("transform", "translate(5,5)")
+                  .attr("transform",  "translate(0,-5)")
                   .attr("class", "focus")
-                  .append("text")
-                  .attr("style", "text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;");
+                  .append("text");
 
             svg.append("g")
                 .attr("class", "voronoi")
@@ -139,7 +139,7 @@ const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
     return contours;
 };
 
-const sunChart = (lat, lon, location, tz, year, resolution = 30) => {
+const sunChart = (lat, lon, location, tz, year, resolution = 60) => {
 
     const margin = {top: 50, right: 50, bottom: 50, left: 50},
           width = 500 - margin.left - margin.top,
