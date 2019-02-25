@@ -1,6 +1,6 @@
 /*global d3, moment, topojson, SunCalc*/
 
-const map = updateSunchart => {
+const map = (updateSunchart, initLoc) => {
     const margin = {top: 50, right: 50, bottom: 50, left: 50},
           width = 500 - margin.left - margin.top,
           height = 250 - margin.top - margin.bottom;
@@ -39,6 +39,8 @@ const map = updateSunchart => {
 
             const mouseover = d => {
                 if (!frozen) {
+                    d3.selectAll(`circle`).attr("fill", "darkgreen");
+
                     d3.select(`circle#zone${d.value.id}`)
                         .attr("fill", "red");
 
@@ -47,15 +49,7 @@ const map = updateSunchart => {
                         .text(d.key)
                         .attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")");
 
-                    updateSunchart(d.value.lat, d.value.long, d.value.name, d.key);
-                }
-            };
-
-            const mouseout = d => {
-                if (!frozen) {
-                    d3.select(`circle#zone${d.value.id}`)
-                        .attr("fill", "darkgreen");
-                    focus.attr("transform", "translate(-100,-100)");
+                    updateSunchart(d.value.lat, d.value.long, d.key);
                 }
             };
 
@@ -111,12 +105,15 @@ const map = updateSunchart => {
                 .attr("fill", "none")
                 .attr("pointer-events", "all")
                 .on("mouseover", mouseover)
-                .on("mouseout", mouseout)
                 .on("click", click);
-    });
+
+            const init = zones.map(d => d.key).indexOf(initLoc);
+            mouseover(zones[init]);
+        });
+
 };
 
-const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
+const sunContours = (lat, long, tz, year, resolution, thresholds) => {
 
     const m = moment.tz(tz).year(year).month(0).date(1),
           data = new Array();
@@ -139,9 +136,9 @@ const sunContours = (lat, long, location, tz, year, resolution, thresholds) => {
     return contours;
 };
 
-const sunChart = (lat, lon, location, tz, year, resolution = 60) => {
+const sunChart = (lat, lon, tz, year, resolution = 60) => {
 
-    const margin = {top: 50, right: 50, bottom: 50, left: 50},
+    const margin = {top: 20, right: 50, bottom: 20, left: 50},
           width = 500 - margin.left - margin.top,
           height = 250 - margin.top - margin.bottom;
 
@@ -159,11 +156,8 @@ const sunChart = (lat, lon, location, tz, year, resolution = 60) => {
         }
     });
 
-
-    var text = [`Location: ${location}`, `Timezone: ${tz}`];
-
     const thresholds = [-90, -18, -12, -6, 0];
-    var contours = sunContours(lat, lon, location, tz, year, resolution, thresholds);
+    var contours = sunContours(lat, lon, tz, year, resolution, thresholds);
 
     const y = d3.scaleTime()
         .domain([new Date(year, 0, 1), new Date(year, 0, 2)])
@@ -214,29 +208,13 @@ const sunChart = (lat, lon, location, tz, year, resolution = 60) => {
         .attr("transform", "translate(0, 0)")
         .call(yAxis);
 
-    svg.append("g")
-        .attr("class", "annotations")
-        .selectAll("text")
-        .data(text)
-        .enter().append("text")
-        .text(d => d)
-        .attr("x", 15)
-        .attr("y", (d, i) => -margin.top/2 + i * 17.5)
-        .attr("class", "annotation")
-        .style("font-size", "15px")
-        .style("font-weight", 300);
-
-    const update = (lat, lon, location, tz) => {
-        contours = sunContours(lat, lon, location, tz, year, resolution, thresholds);
-        text = [`Location: ${location}`, `Timezone: ${tz}`];
+    const update = (lat, lon, tz) => {
+        contours = sunContours(lat, lon, tz, year, resolution, thresholds);
 
         svg.selectAll("path")
             .data(contours)
             .attr("d", d3.geoPath(projection));
 
-        svg.selectAll(".annotation")
-            .data(text)
-            .text(d => d);
     };
 
     return update;
@@ -244,7 +222,11 @@ const sunChart = (lat, lon, location, tz, year, resolution = 60) => {
 };
 
 const main = () => {
-    const year = new Date().getFullYear(),
-          updateSunchart = sunChart(53.55, -112.5333, "America/Edmonton", "America/Edmonton", year);
-    map(updateSunchart);
+    const init = {loc: "America/Edmonton",
+                  lat: 53.55,
+                  lon: -112.5333,
+                  year: new Date().getFullYear()};
+
+    const updateSunchart = sunChart(init.lat, init.lon, init.loc, init.year);
+    map(updateSunchart, init.loc);
 };
