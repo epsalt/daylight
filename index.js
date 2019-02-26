@@ -116,9 +116,11 @@ const map = (updateSunchart, initLoc) => {
 const sunContours = (lat, long, tz, year, resolution, thresholds) => {
 
     const m = moment.tz(tz).year(year).month(0).date(1),
-          data = new Array();
+          data = new Array(),
+          daysInYear = moment([year]).isLeapYear() ? 366 : 365,
+          minutesPerDay = 1440;
 
-    for (let i = 0; i < 365; i++) {
+    for (let i = 0; i < daysInYear; i++) {
         for (let j = 0; j < 24; j++) {
             for (let k = 0; k < 60/resolution; k++) {
                 m.dayOfYear(i+1).hours(j).minutes(k * resolution);
@@ -129,7 +131,7 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
     }
 
     const contours = d3.contours()
-          .size([1440 / resolution, 365])
+          .size([minutesPerDay / resolution, daysInYear])
           .thresholds(thresholds)(data);
 
     return contours;
@@ -145,12 +147,15 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    const daysInYear = moment([year]).isLeapYear() ? 366 : 365,
+          minutesPerDay = 1440;
 
     const projection = d3.geoTransform({
         point: function(x, y) {
-            let nx = y * (width / 365);
-            let ny = height - x * (height / (1440 / resolution));
+            let nx = y * (width / daysInYear);
+            let ny = height - x * (height / (minutesPerDay / resolution));
             this.stream.point(nx, ny);
         }
     });
