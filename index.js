@@ -121,12 +121,11 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
     for (let i = 0; i < 365; i++) {
         for (let j = 0; j < 24; j++) {
             for (let k = 0; k < 60/resolution; k++) {
-                m.hours(j).minutes(k * resolution);
+                m.dayOfYear(i+1).hours(j).minutes(k * resolution);
                 var alt = SunCalc.getPosition(m.clone(), lat, long).altitude * (180/Math.PI);
                 data[i * 24 * (60/resolution) + j * (60/resolution) + k] =  alt;
             }
         }
-        m.add(1, "days");
     }
 
     const contours = d3.contours()
