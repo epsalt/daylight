@@ -115,19 +115,16 @@ const map = (updateSunchart, initLoc) => {
 
 const sunContours = (lat, long, tz, year, resolution, thresholds) => {
 
-    const m = moment.tz(tz).year(year).month(0).date(1),
-          data = new Array(),
+    const m = moment.utc().year(year).month(0).date(1).startOf('day'),
           daysInYear = moment([year]).isLeapYear() ? 366 : 365,
-          minutesPerDay = 1440;
+          minutesPerDay = 1440,
+          data = new Array(),
+          zone = moment.tz.zone(tz);
 
-    for (let i = 0; i < daysInYear; i++) {
-        for (let j = 0; j < 24; j++) {
-            for (let k = 0; k < 60/resolution; k++) {
-                m.dayOfYear(i+1).hours(j).minutes(k * resolution);
-                var alt = SunCalc.getPosition(m.clone(), lat, long).altitude * (180/Math.PI);
-                data[i * 24 * (60/resolution) + j * (60/resolution) + k] =  alt;
-            }
-        }
+    for (let i = 0; i < (daysInYear * minutesPerDay / resolution); i++) {
+        let val = m.valueOf() + zone.parse(m) * 60000;
+        data[i] = SunCalc.getPosition(val, lat, long).altitude * (180/Math.PI);
+        m.add(resolution, 'minutes');
     }
 
     const contours = d3.contours()
