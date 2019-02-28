@@ -131,7 +131,11 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
           .size([minutesPerDay / resolution, daysInYear])
           .thresholds(thresholds)(data);
 
-    return contours;
+    const dstLines = zone.untils.filter(d => {
+        return (d > new Date(year, 0, 1)) && (d < new Date(year, 11, 31));
+    });
+
+    return [contours, dstLines];
 };
 
 const sunChart = (lat, lon, tz, year, resolution = 60) => {
@@ -141,9 +145,9 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
           height = 250 - margin.top - margin.bottom;
 
     const svg = d3.select(".chart").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     const daysInYear = moment([year]).isLeapYear() ? 366 : 365,
@@ -158,7 +162,7 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
     });
 
     const thresholds = [-90, -18, -12, -6, 0];
-    var contours = sunContours(lat, lon, tz, year, resolution, thresholds);
+    var [contours, dstLines] = sunContours(lat, lon, tz, year, resolution, thresholds);
 
     const y = d3.scaleTime()
         .domain([new Date(year, 0, 1), new Date(year, 0, 2)])
@@ -196,6 +200,19 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .style("opacity", 0.5);
 
     svg.append("g")
+        .attr("class", "lines")
+        .selectAll("line")
+        .data(dstLines)
+        .enter().append("line")
+        .attr('x1', d => x(d))
+        .attr('y1', height)
+        .attr('x2', d => x(d))
+        .attr('y2', 0)
+        .style("stroke-width", 2)
+        .style("stroke", "#ccc")
+        .style("fill", "none");
+
+    svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis)
@@ -210,11 +227,32 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .call(yAxis);
 
     const update = (lat, lon, tz) => {
-        contours = sunContours(lat, lon, tz, year, resolution, thresholds);
+        [contours, dstLines] = sunContours(lat, lon, tz, year, resolution, thresholds);
 
         svg.selectAll("path")
             .data(contours)
             .attr("d", d3.geoPath(projection));
+
+        var lines = svg.select(".lines")
+            .selectAll("line")
+            .data(dstLines);
+
+        lines
+            .attr('x1', d => x(d))
+            .attr('x2', d => x(d))
+            .attr('y1', height)
+            .attr('y2', 0);
+
+        lines.exit().remove();
+
+        lines.enter().append("line")
+            .attr('x1', d => x(d))
+            .attr('x2', d => x(d))
+            .attr('y1', height)
+            .attr('y2', 0)
+            .style("stroke-width", 2)
+            .style("stroke", "#ccc")
+            .style("fill", "none");
 
     };
 
