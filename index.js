@@ -1,8 +1,8 @@
 /*global d3, moment, topojson, SunCalc*/
 
 const map = (updateSunchart, initLoc) => {
-    const margin = {top: 50, right: 50, bottom: 50, left: 50},
-          width = 500 - margin.left - margin.top,
+    const margin = {top: 5, right: 5, bottom: 5, left: 40},
+          width = 500 - margin.left - margin.right,
           height = 250 - margin.top - margin.bottom;
 
     const svg = d3.select(".map").append("svg")
@@ -11,17 +11,16 @@ const map = (updateSunchart, initLoc) => {
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    const projection = d3.geoEquirectangular()
-          .translate([width / 2, height / 2])
-          .scale(75);
-
-    const path = d3.geoPath()
-          .projection(projection);
-
     Promise.all([
         d3.json("https://unpkg.com/world-atlas@1/world/110m.json"),
         d3.json("https://raw.githubusercontent.com/moment/moment-timezone/bf1de5d6a7cc6cb493d90b021fb2c0ac777c93eb/data/meta/latest.json")])
         .then(([world, tz]) => {
+
+            const projection = d3.geoEquirectangular()
+                  .fitSize([width, height], topojson.feature(world, world.objects.countries));
+
+            const path = d3.geoPath()
+                  .projection(projection);
 
             const zones = d3.entries(tz.zones).map(
                 (obj, i) => {
@@ -140,8 +139,8 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
 
 const sunChart = (lat, lon, tz, year, resolution = 60) => {
 
-    const margin = {top: 20, right: 50, bottom: 20, left: 50},
-          width = 500 - margin.left - margin.top,
+    const margin = {top: 5, right: 5, bottom: 20, left: 40},
+          width = 500 - margin.left - margin.right,
           height = 250 - margin.top - margin.bottom;
 
     const svg = d3.select(".chart").append("svg")
@@ -163,6 +162,11 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
 
     const thresholds = [-90, -18, -12, -6, 0],
           colors = ["#808080", "#A0A6B6", "#B4C5D6", "#CBDEE5", "#E6EEF1"];
+
+    const labels = ["Night", "Astronomical Twilight", "Nautical Twilight", "Civil Twilight", "Day"];
+    const legendData = thresholds
+          .map((d, i) => (
+              { label: labels[i], threshold: d, color: colors[i]}));
 
     var [contours, dstLines] = sunContours(lat, lon, tz, year, resolution, thresholds);
 
@@ -222,6 +226,36 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .attr("class", "y axis")
         .attr("transform", "translate(0, 0)")
         .call(yAxis);
+
+    // Legend code from https://stackoverflow.com/a/52256345
+    const legend = d3.select(".legend").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("transform", "translate(" + margin.left + "," + margin.top/2 + ")")
+          .attr("height", 15)
+          .selectAll("g")
+          .data(legendData)
+          .enter()
+          .append("g");
+
+    legend.append('rect')
+        .attr('fill', d => d.color)
+        .attr('height', 15)
+        .attr('width', 15);
+
+    legend.append('text')
+        .attr('x', 18)
+        .attr('y', 10)
+        .attr('dy', '.15em')
+        .text(d => d.label)
+        .style('text-anchor', 'start')
+        .style('font-size', 13);
+
+    const padding = 7;
+    legend.attr('transform', (d, i) => {
+        return 'translate(' + (d3.sum(legendData,  (e, j) => {
+            if (j < i) { return legend.nodes()[j].getBBox().width; } else { return 0; }
+        }) + padding * i) + ',0)';
+    });
 
     const update = (lat, lon, tz) => {
         [contours, dstLines] = sunContours(lat, lon, tz, year, resolution, thresholds);
