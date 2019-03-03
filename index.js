@@ -161,7 +161,9 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         }
     });
 
-    const thresholds = [-90, -18, -12, -6, 0];
+    const thresholds = [-90, -18, -12, -6, 0],
+          colors = ["#808080", "#A0A6B6", "#B4C5D6", "#CBDEE5", "#E6EEF1"];
+
     var [contours, dstLines] = sunContours(lat, lon, tz, year, resolution, thresholds);
 
     const y = d3.scaleTime()
@@ -185,10 +187,6 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .ticks(5)
         .tickFormat(d3.timeFormat("%I %p"));
 
-    const color = d3.scaleLinear()
-          .domain(d3.extent(thresholds))
-          .interpolate(d => d3.interpolateCubehelixDefault);
-
     svg.append("g")
         .attr("class", "contours")
         .selectAll("path")
@@ -196,8 +194,7 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .enter().append("path")
         .attr("id", d => "g-" + d.value)
         .attr("d", d3.geoPath(projection))
-        .style("fill", d => color(d.value))
-        .style("opacity", 0.5);
+        .style("fill", (d, i) => colors[i]);
 
     svg.append("g")
         .attr("class", "lines")
