@@ -1,15 +1,15 @@
 /*global d3, moment, topojson, SunCalc*/
 
-const map = (updateSunchart, initLoc) => {
+const map = (updateSunchart, initLoc, scale) => {
     const margin = {top: 5, right: 5, bottom: 5, left: 40},
-          width = 500 - margin.left - margin.right,
-          height = 250 - margin.top - margin.bottom;
+          width =  500 * scale - margin.left - margin.right,
+          height = 250 * scale - margin.top - margin.bottom;
 
     const svg = d3.select(".map").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     Promise.all([
         d3.json("https://unpkg.com/world-atlas@1/world/110m.json"),
@@ -137,11 +137,11 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
     return [contours, dstLines];
 };
 
-const sunChart = (lat, lon, tz, year, resolution = 60) => {
+const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
 
     const margin = {top: 5, right: 5, bottom: 20, left: 40},
-          width = 500 - margin.left - margin.right,
-          height = 250 - margin.top - margin.bottom;
+          width =  500 * scale - margin.left - margin.right,
+          height = 250 * scale - margin.top - margin.bottom;
 
     const svg = d3.select(".chart").append("svg")
           .attr("width", width + margin.left + margin.right)
@@ -219,7 +219,7 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .call(xAxis)
         .selectAll(".tick text")
         .style("text-anchor", "start")
-        .attr("x", 6)
+        .attr("x", 3)
         .attr("y", 6);
 
     svg.append("g")
@@ -231,7 +231,7 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
     const legend = d3.select(".legend").append("svg")
           .attr("width", width + margin.left + margin.right)
           .attr("transform", "translate(" + margin.left + "," + margin.top/2 + ")")
-          .attr("height", 15)
+          .attr("height", (scale === 1) ? 50 : 65)
           .selectAll("g")
           .data(legendData)
           .enter()
@@ -250,12 +250,12 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
         .style('text-anchor', 'start')
         .style('font-size', 13);
 
-    const padding = 7;
-    legend.attr('transform', (d, i) => {
-        return 'translate(' + (d3.sum(legendData,  (e, j) => {
-            if (j < i) { return legend.nodes()[j].getBBox().width; } else { return 0; }
-        }) + padding * i) + ',0)';
-    });
+    const padding = 7,
+          cols = (scale === 1) ? 3 : 2;
+
+    legend.attr('transform', (d, i, arr) => "translate(" +
+                (d3.max(legend.nodes().map(j => j.getBBox().width)) + padding * 2) * Math.floor(i / (arr.length / cols)) +  "," +
+                parseInt((legend.nodes()[i].getBBox().height + padding) * (i % Math.ceil(arr.length / cols))) + ")");
 
     const update = (lat, lon, tz) => {
         [contours, dstLines] = sunContours(lat, lon, tz, year, resolution, thresholds);
@@ -291,12 +291,15 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
 
 };
 
-const main = () => {
+{
+    const width = parseInt(d3.select(".map").style('width')),
+          scale = (width > 480) ? 1 : width / 500;
+
     const init = {loc: "America/Edmonton",
                   lat: 53.55,
                   lon: -112.5333,
                   year: new Date().getFullYear()};
 
-    const updateSunchart = sunChart(init.lat, init.lon, init.loc, init.year);
-    map(updateSunchart, init.loc);
-};
+    const updateSunchart = sunChart(init.lat, init.lon, init.loc, init.year, scale);
+    map(updateSunchart, init.loc, scale);
+}
