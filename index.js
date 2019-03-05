@@ -1,115 +1,42 @@
-/*global d3, moment, topojson, SunCalc*/
+/*global d3, moment, L, SunCalc*/
 
-const map = (updateSunchart, initLoc, scale) => {
-    const margin = {top: 5, right: 5, bottom: 5, left: 40},
-          width =  500 * scale - margin.left - margin.right,
-          height = 250 * scale - margin.top - margin.bottom;
+const map = (updateSunchart) => {
+    var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+	osmAttrib = '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+	osm = L.tileLayer(osmUrl, {maxZoom: 18, attribution: osmAttrib});
 
-    const svg = d3.select(".map").append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
-          .append("g")
-          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    const bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+    const leafletMap = L.map('map', {
+        center: bounds.getCenter(),
+	zoom: 1,
+        layers: [osm],
+        noWrap: true,
+        minZoom: 1,
+	maxBounds: bounds,
+	maxBoundsViscosity: 0.80});
 
-    Promise.all([
-        d3.json("https://unpkg.com/world-atlas@1/world/110m.json"),
-        d3.json("https://raw.githubusercontent.com/moment/moment-timezone/bf1de5d6a7cc6cb493d90b021fb2c0ac777c93eb/data/meta/latest.json")])
-        .then(([world, tz]) => {
+    d3.json("https://raw.githubusercontent.com/moment/moment-timezone/bf1de5d6a7cc6cb493d90b021fb2c0ac777c93eb/data/meta/latest.json")
+        .then(tz => {
 
-            const projection = d3.geoEquirectangular()
-                  .fitSize([width, height], topojson.feature(world, world.objects.countries));
+            const zones = d3.entries(tz.zones).map(d => {
+                return L.circleMarker([d.value.lat, d.value.long], {title: d.key, radius: 3}).addTo(leafletMap)
+                    .bindTooltip(d.key);
+            });
 
-            const path = d3.geoPath()
-                  .projection(projection);
+            leafletMap.on('mousemove', mouseMove);
 
-            const zones = d3.entries(tz.zones).map(
-                (obj, i) => {
-                    obj.value["id"] = i;
-                    return obj;}
-            );
+            function mouseMove(e) {
+                let point = L.GeometryUtil.closestLayer(leafletMap, zones, e.latlng);
 
-            const points = d3.entries(tz.zones)
-                  .map(d => projection([d.value.long, d.value.lat]));
+                leafletMap.eachLayer(layer => {
+                    if(layer.options.pane === "tooltipPane") layer.removeFrom(leafletMap);
+                });
 
-            const voronoi = d3.Delaunay.from(points)
-                  .voronoi([-margin.left, -margin.top, width + margin.right, height + margin.bottom]);
-
-            var frozen = false;
-
-            const mouseover = d => {
-                if (!frozen) {
-                    d3.selectAll(`circle`).attr("fill", "darkgreen");
-
-                    d3.select(`circle#zone${d.value.id}`)
-                        .attr("fill", "red");
-
-                    focus
-                        .attr("class", (d.value.long > 90) ? "focus right" : "focus left")
-                        .text(d.key)
-                        .attr("transform", "translate(" + projection([d.value.long, d.value.lat])[0] + "," + projection([d.value.long, d.value.lat])[1] + ")");
-
-                    updateSunchart(d.value.lat, d.value.long, d.key);
-                }
+                point.layer.openTooltip();
+                updateSunchart(point.latlng.lat, point.latlng.lng, point.layer.options.title);
             };
 
-            const click = d => {
-                frozen = !frozen;
-
-                if (!frozen) {
-                    d3.selectAll(`circle`)
-                        .attr("fill", "darkgreen");
-                    mouseover(d);
-                }
-            };
-
-            svg.append("g")
-                .attr("class", "countries")
-                .append("path")
-                .attr("d", path(topojson.feature(world, world.objects.countries)))
-                .attr("fill", "#ccc")
-                .attr("stroke", "white");
-
-            svg.append("g")
-                .attr("class", "border")
-                .append("path")
-                .attr("d", path(({type: "Sphere"})))
-                .attr("stroke", "#000")
-                .attr("fill", "none");
-
-            svg.append("g")
-                .attr("class", "points")
-                .selectAll("circle")
-                .data(zones)
-                .enter()
-                .append("circle")
-                .attr("r", 2)
-                .attr("cx", d => projection([d.value.long, d.value.lat])[0])
-                .attr("cy", d => projection([d.value.long, d.value.lat])[1])
-                .attr("fill", "darkgreen")
-                .attr("opacity", 0.5)
-                .attr("id", d => `zone${d.value.id}`);
-
-            const focus = svg.append("g")
-                  .attr("transform",  "translate(0,-5)")
-                  .attr("class", "focus")
-                  .append("text");
-
-            svg.append("g")
-                .attr("class", "voronoi")
-                .selectAll("path")
-                .data(zones)
-                .enter()
-                .append("path")
-                .attr("d", (d, i) => voronoi.renderCell(i))
-                .attr("fill", "none")
-                .attr("pointer-events", "all")
-                .on("mouseover", mouseover)
-                .on("click", click);
-
-            const init = zones.map(d => d.key).indexOf(initLoc);
-            mouseover(zones[init]);
         });
-
 };
 
 const sunContours = (lat, long, tz, year, resolution, thresholds) => {
@@ -139,8 +66,8 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
 
 const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
 
-    const margin = {top: 5, right: 5, bottom: 20, left: 40},
-          width =  500 * scale - margin.left - margin.right,
+    const margin = {top: 10, right: 0, bottom: 20, left: 40},
+          width =  550 * scale - margin.left - margin.right,
           height = 250 * scale - margin.top - margin.bottom;
 
     const svg = d3.select(".chart").append("svg")
@@ -292,8 +219,8 @@ const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
 };
 
 {
-    const width = parseInt(d3.select(".map").style('width')),
-          scale = (width > 480) ? 1 : width / 500;
+    const width = parseInt(d3.select("#map").style('width')),
+          scale = (width > 480) ? 1 : width / 550;
 
     const init = {loc: "America/Edmonton",
                   lat: 53.55,
@@ -301,5 +228,5 @@ const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
                   year: new Date().getFullYear()};
 
     const updateSunchart = sunChart(init.lat, init.lon, init.loc, init.year, scale);
-    map(updateSunchart, init.loc, scale);
+    map(updateSunchart);
 }

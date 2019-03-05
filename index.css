@@ -9,3 +9,8 @@
 .focus.right {
     text-anchor: end;
 }
+
+#map {
+    width: 550px;
+    height: 400px;
+}
