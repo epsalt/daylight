@@ -19,22 +19,38 @@ const map = (updateSunchart) => {
         .then(tz => {
 
             const zones = d3.entries(tz.zones).map(d => {
-                return L.circleMarker([d.value.lat, d.value.long], {title: d.key, radius: 3}).addTo(leafletMap)
+                return L.circleMarker([d.value.lat, d.value.long], {title: d.key, radius: 3, weight: 1}).addTo(leafletMap)
                     .bindTooltip(d.key);
             });
 
+            var current = zones.find(e => (e.options.title === "America/Edmonton"));
+
+            current
+                .openTooltip()
+                .setStyle({color: "#f44271"});
+
+             const mouseMove = e => {
+                let point = L.GeometryUtil.closestLayer(leafletMap, zones, e.latlng).layer;
+
+                if(point === current) {
+                    return;
+                }
+
+                current
+                    .closeTooltip()
+                    .setStyle({color: "#3388ff"});
+
+                point
+                    .openTooltip()
+                    .setStyle({color: "#f44271"});
+
+                let latlng = point.getLatLng();
+                updateSunchart(latlng.lat, latlng.lng, point.options.title);
+
+                current = point;
+             };
+
             leafletMap.on('mousemove', mouseMove);
-
-            function mouseMove(e) {
-                let point = L.GeometryUtil.closestLayer(leafletMap, zones, e.latlng);
-
-                leafletMap.eachLayer(layer => {
-                    if(layer.options.pane === "tooltipPane") layer.removeFrom(leafletMap);
-                });
-
-                point.layer.openTooltip();
-                updateSunchart(point.latlng.lat, point.latlng.lng, point.layer.options.title);
-            };
 
         });
 };
