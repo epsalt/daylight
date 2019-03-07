@@ -20,38 +20,41 @@ const map = (updateSunchart) => {
 
             const zones = d3.entries(tz.zones).map(d => {
                 return L.circleMarker([d.value.lat, d.value.long], {title: d.key, radius: 3, weight: 1}).addTo(leafletMap)
-                    .bindTooltip(d.key);
+                    .bindTooltip(d.key, {permanent: true})
+                    .closeTooltip();
             });
 
-            var current = zones.find(e => (e.options.title === "America/Edmonton"));
+            var current = zones.find(e => (e.options.title === "America/Edmonton")),
+                frozen = false;
 
             current
                 .openTooltip()
                 .setStyle({color: "#f44271"});
 
-             const mouseMove = e => {
+            const mouseMove = e => {
                 let point = L.GeometryUtil.closestLayer(leafletMap, zones, e.latlng).layer;
 
-                if(point === current) {
-                    return;
+                if(point !=  current) {
+                    current
+                        .closeTooltip()
+                        .setStyle({color: "#3388ff"});
+
+                    point
+                        .openTooltip()
+                        .setStyle({color: "#f44271"});
+
+                    let latlng = point.getLatLng();
+                    updateSunchart(latlng.lat, latlng.lng, point.options.title);
+
+                    current = point;
                 }
-
-                current
-                    .closeTooltip()
-                    .setStyle({color: "#3388ff"});
-
-                point
-                    .openTooltip()
-                    .setStyle({color: "#f44271"});
-
-                let latlng = point.getLatLng();
-                updateSunchart(latlng.lat, latlng.lng, point.options.title);
-
-                current = point;
              };
 
-            leafletMap.on('mousemove', mouseMove);
-
+            leafletMap.on('mousemove', e => { if (!frozen) mouseMove(e); });
+            leafletMap.on('click', e => {
+                frozen = !frozen;
+                mouseMove(e);
+            });
         });
 };
 
