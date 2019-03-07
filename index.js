@@ -5,7 +5,8 @@ const map = (updateSunchart) => {
 	osmAttrib = '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 	osm = L.tileLayer(osmUrl, {maxZoom: 18, attribution: osmAttrib});
 
-    const bounds = new L.LatLngBounds(new L.LatLng(-90, -180), new L.LatLng(90, 180));
+    const bounds = new L.LatLngBounds(new L.LatLng(-80, -180), new L.LatLng(75, 180));
+
     const leafletMap = L.map('map', {
         center: bounds.getCenter(),
 	zoom: 1,
