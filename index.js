@@ -3,7 +3,9 @@
 const map = (updateSunchart) => {
     var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
 	osmAttrib = '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-	osm = L.tileLayer(osmUrl, {maxZoom: 18, attribution: osmAttrib});
+	osm = L.tileLayer(osmUrl, {maxZoom: 18, attribution: osmAttrib}),
+        momentAttrib = '<a href="https://momentjs.com/timezone/">Moment Timezone</a>';
+
 
     const bounds = new L.LatLngBounds(new L.LatLng(-80, -180), new L.LatLng(75, 180));
 
@@ -20,7 +22,10 @@ const map = (updateSunchart) => {
         .then(tz => {
 
             const zones = d3.entries(tz.zones).map(d => {
-                return L.circleMarker([d.value.lat, d.value.long], {title: d.key, radius: 3, weight: 1}).addTo(leafletMap)
+                return L.circleMarker([d.value.lat, d.value.long],
+                                      {title: d.key, radius: 3, weight: 1,
+                                       attribution: momentAttrib})
+                    .addTo(leafletMap)
                     .bindTooltip(d.key, {permanent: true})
                     .closeTooltip();
             });
