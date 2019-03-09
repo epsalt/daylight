@@ -25,7 +25,7 @@ const map = (updateSunchart) => {
 
       const zones = d3.entries(tz.zones).map(d => (
         L.circleMarker([d.value.lat, d.value.long],
-          {title: d.key, radius: 3, weight: 1,
+          {title: d.key, radius: 3, weight: 1, interactive: false,
             attribution: momentAttrib})
               .addTo(leafletMap)
               .bindTooltip(d.key, {permanent: true})
@@ -60,11 +60,23 @@ const map = (updateSunchart) => {
 
       const click = e => {
         frozen = !frozen;
+        (frozen) ? leafletMap.off('mousemove') : leafletMap.on('mousemove', mouseMove);
         mouseMove(e);
       };
 
-      leafletMap.on('mousemove', e => { if (!frozen) mouseMove(e); });
+      const dragStart = e => {
+        leafletMap.off('mousemove');
+      };
+
+      const dragEnd = e => {
+        leafletMap.on('mousemove', mouseMove);
+      };
+
+      leafletMap.on('mousemove', mouseMove);
       leafletMap.on('click', click);
+      leafletMap.on('dragstart', dragStart);
+      leafletMap.on('dragend' , dragEnd);
+
     });
 };
 
