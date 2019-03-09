@@ -104,10 +104,10 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
   return [contours, dstLines];
 };
 
-const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
+const sunChart = (lat, lon, tz, year, resolution = 60) => {
   const margin = {top: 10, right: 0, bottom: 20, left: 40};
-  const width =  550 * scale - margin.left - margin.right;
-  const height = 250 * scale - margin.top - margin.bottom;
+  const width =  document.querySelector(".chart").offsetWidth - margin.left - margin.right;
+  const height = width/2 - margin.top - margin.bottom;
 
   const svg = d3.select(".chart").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -194,13 +194,13 @@ const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
   );
 
   const legendPadding = 7;
-  const legendCols = (scale === 1) ? 3 : 2;
+  const legendCols = (width >= 510) ? 3 : 2;
 
   // Legend code from https://stackoverflow.com/a/52256345
   const legend = d3.select(".legend").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("transform", "translate(" + margin.left + "," + margin.top/2 + ")")
-    .attr("height", (scale === 1) ? 50 : 65)
+    .attr("height", (width >= 510) ? 50 : 65)
     .selectAll("g")
     .data(legendData)
     .enter()
@@ -263,8 +263,6 @@ const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
 };
 
 {
-  const width = parseInt(d3.select("#map").style('width'));
-  const scale = (width > 480) ? 1 : width / 550;
   const init  = {
     loc: "Atlantic/Madeira",
     lat: 32.6333,
@@ -272,6 +270,6 @@ const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
     year: new Date().getFullYear()
   };
 
-  const updateSunchart = sunChart(init.lat, init.lon, init.loc, init.year, scale);
+  const updateSunchart = sunChart(init.lat, init.lon, init.loc, init.year);
   map(updateSunchart);
 }

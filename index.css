@@ -1,16 +1,16 @@
-.focus {
-    text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
-}
-
-.focus.left {
-    text-anchor: start;
-}
-
-.focus.right {
-    text-anchor: end;
-}
-
 #map {
-    width: 550px;
-    height: 400px;
+    max-width: 548px;
+    height: 200px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+}
+
+.chart {
+    max-width: 550px;
+}
+
+@media screen and (min-width: 550px) {
+  #map {
+      height: 375px;
+  }
 }
