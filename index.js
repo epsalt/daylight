@@ -32,7 +32,7 @@ const map = (updateSunchart) => {
               .closeTooltip()
       ));
 
-      var current = zones.find(e => (e.options.title === "America/Edmonton"));
+      var current = zones.find(e => (e.options.title === "Atlantic/Madeira"));
       var frozen = false;
 
       current
@@ -266,9 +266,9 @@ const sunChart = (lat, lon, tz, year, scale, resolution = 60) => {
   const width = parseInt(d3.select("#map").style('width'));
   const scale = (width > 480) ? 1 : width / 550;
   const init  = {
-    loc: "America/Edmonton",
-    lat: 53.55,
-    lon: -112.5333,
+    loc: "Atlantic/Madeira",
+    lat: 32.6333,
+    lon: -15.1,
     year: new Date().getFullYear()
   };
 
