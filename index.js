@@ -106,8 +106,8 @@ const sunContours = (lat, long, tz, year, resolution, thresholds) => {
 
 const sunChart = (lat, lon, tz, year, resolution = 60) => {
   const margin = {top: 10, right: 0, bottom: 20, left: 40};
-  const width =  document.querySelector(".chart").offsetWidth - margin.left - margin.right;
-  const height = width/2 - margin.top - margin.bottom;
+  const width =  550 - margin.left - margin.right;
+  const height = 275 - margin.top - margin.bottom;
 
   const svg = d3.select(".chart").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -194,7 +194,7 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
   );
 
   const legendPadding = 7;
-  const legendCols = (width >= 510) ? 3 : 2;
+  const legendCols = 3;
 
   // Legend code from https://stackoverflow.com/a/52256345
   const legend = d3.select(".legend").append("svg")

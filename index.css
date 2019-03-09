@@ -1,16 +1,6 @@
 #map {
     max-width: 548px;
-    height: 200px;
+    height: 375px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
-}
-
-.chart {
-    max-width: 550px;
-}
-
-@media screen and (min-width: 550px) {
-  #map {
-      height: 375px;
-  }
 }
