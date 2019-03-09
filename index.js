@@ -109,7 +109,7 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
   const width =  550 - margin.left - margin.right;
   const height = 275 - margin.top - margin.bottom;
 
-  const svg = d3.select(".chart").append("svg")
+  const svg = d3.select("#chart").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
@@ -197,7 +197,7 @@ const sunChart = (lat, lon, tz, year, resolution = 60) => {
   const legendCols = 3;
 
   // Legend code from https://stackoverflow.com/a/52256345
-  const legend = d3.select(".legend").append("svg")
+  const legend = d3.select("#legend").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("transform", "translate(" + margin.left + "," + margin.top/2 + ")")
     .attr("height", (width >= 510) ? 50 : 65)
