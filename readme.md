@@ -9,7 +9,7 @@ across the globe. See the full interactive version [here][blog].
 
 This graphic was directly inspired by two sources:
 
-- The excellent sun charts from [timeanddate.com][tdc]
+- The excellent sun graphs from [timeanddate.com][tdc]
 - A map of the world from the landing page of [Moment-Timezone][mtz]
 
 ## About
