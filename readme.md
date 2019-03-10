@@ -1,7 +1,7 @@
 # Daylight Charts
 
-Explore how daylight hours change throughout the year across the
-globe. See the full interactive version [here][blog].
+Explore how daylight hours change throughout the year in locations
+across the globe. See the full interactive version [here][blog].
 
 ![Daylight Chart GIF][gif]
 
@@ -11,8 +11,6 @@ This graphic was directly inspired by two sources:
 
 - The excellent sun charts from [timeanddate.com][tdc]
 - A map of the world from the landing page of [Moment-Timezone][mtz]
-  (in addition to using [Moment][moment], this project also relies on
-  [geographic time zone data distributed with the library][mtzd]).
 
 ## About
 
