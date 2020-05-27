@@ -1,7 +1,8 @@
 # Daylight Charts
 
 Explore how daylight hours change throughout the year in locations
-across the globe. See the full interactive version [here][blog].
+across the globe. Time zone data is current as of IANA 2020a. See the
+full interactive version [here][blog].
 
 ![Daylight Chart GIF][gif]
 

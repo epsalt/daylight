@@ -20,7 +20,7 @@ const map = (updateSunchart) => {
     maxBoundsViscosity: 0.80
   });
 
-  d3.json("https://raw.githubusercontent.com/moment/moment-timezone/develop/data/meta/latest.json")
+  d3.json("https://raw.githubusercontent.com/moment/moment-timezone/develop/data/meta/2020a.json")
     .then(tz => {
 
       const zones = d3.entries(tz.zones).map(d => (
